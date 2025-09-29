@@ -1,8 +1,7 @@
-export const metadata = {
-    title: 'Home',
-};
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const HomePage = () => {
+const HomePage = async () => {
+    await delay(5000);
     return <>Prostore</>;
 };
 
