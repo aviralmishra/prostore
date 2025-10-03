@@ -10,7 +10,7 @@ import {
     DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon, SunMoon, Moon } from 'lucide-react';
+import { SunIcon, MoonIcon, SunMoon } from 'lucide-react';
 import { DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu';
 
 const ModeToggle = () => {
