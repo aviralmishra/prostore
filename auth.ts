@@ -116,7 +116,7 @@ export const config = {
             if (session?.user.name && trigger === 'update') {
                 token.name = session.user.name;
             }
-
+            console.log(token);
             return token;
         },
     },
