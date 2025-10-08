@@ -41,13 +41,16 @@ export function formatNumberWithDecimal(num: number): string {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function formatError(error: any) {
+    console.info(error);
+
     if (error.name === 'ZodError') {
         // Handle Zod error
-        const fieldErrors = Object.keys(error.errors).map(
-            (field) => error.errors[field].message
-        );
-
-        return fieldErrors.join('. ');
+        const parsedError = JSON.parse(error);
+        if (Array.isArray(parsedError) && parsedError.length > 0) {
+            return parsedError[0].message;
+        } else {
+            return parsedError;
+        }
     } else if (
         error.name === 'PrismaClientKnownRequestError' &&
         error.code === 'P2002'
