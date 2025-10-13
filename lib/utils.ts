@@ -66,6 +66,12 @@ export function formatError(error: any) {
     }
 }
 
+/**
+ * Round to 2 decimal places
+ *
+ * @param value
+ * @returns rounded value
+ */
 export function round2(value: number | string) {
     if (typeof value === 'number') {
         return Math.round((value + Number.EPSILON) * 100) / 100;
