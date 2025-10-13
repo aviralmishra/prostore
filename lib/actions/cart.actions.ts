@@ -47,7 +47,7 @@ export async function addItemToCart(data: CartItem) {
         const product = await prisma.product.findFirst({
             where: { id: item.productId },
         });
-        if (!product) throw new Error('Product not found');
+        if (!product) throw new Error('Product not found.');
 
         if (!cart) {
             // Create new cart object
@@ -158,29 +158,29 @@ export async function removeItemFromCart(productId: string) {
         const product = await prisma.product.findFirst({
             where: { id: productId },
         });
-        if (!product) throw new Error('Product not found');
+        if (!product) throw new Error('Product not found.');
 
         // Get user cart
         const cart = await getMyCart();
-        if (!cart) throw new Error('Cart not found');
+        if (!cart) throw new Error('Cart not found.');
 
         // Check for item
-        const exist = (cart.items as CartItem[]).find(
+        const existing = (cart.items as CartItem[]).find(
             (x) => x.productId === productId
         );
-        if (!exist) throw new Error('Item not found');
+        if (!existing) throw new Error('Item not found.');
 
         // Check if only one in qty
-        if (exist.qty === 1) {
+        if (existing.qty === 1) {
             // Remove from cart
             cart.items = (cart.items as CartItem[]).filter(
-                (x) => x.productId !== exist.productId
+                (x) => x.productId !== existing.productId
             );
         } else {
             // Decrease qty
             (cart.items as CartItem[]).find(
                 (x) => x.productId === productId
-            )!.qty = exist.qty - 1;
+            )!.qty = existing.qty - 1;
         }
 
         // Update cart in database
@@ -196,7 +196,7 @@ export async function removeItemFromCart(productId: string) {
 
         return {
             success: true,
-            message: `${product.name} was removed from cart`,
+            message: `${product.name} was removed from cart.`,
         };
     } catch (error) {
         return { success: false, message: formatError(error) };
