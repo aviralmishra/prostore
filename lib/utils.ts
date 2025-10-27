@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import qs from 'query-string';
+
 /**
  * Merge class names list
  *
@@ -162,3 +164,32 @@ export const formatDateTime = (dateString: Date) => {
         timeOnly: formattedTime,
     };
 };
+
+/**
+ * Forms URL Query
+ *
+ * @param params URL parametrs
+ * @returns
+ */
+export function formUrlQuery({
+    params,
+    key,
+    value,
+}: {
+    params: string;
+    key: string;
+    value: string | null;
+}) {
+    const query = qs.parse(params);
+    query[key] = value;
+
+    return qs.stringifyUrl(
+        {
+            url: window.location.pathname,
+            query,
+        },
+        {
+            skipNull: true,
+        }
+    );
+}
