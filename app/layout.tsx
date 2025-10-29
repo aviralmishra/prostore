@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
+import { ThemeProvider } from 'next-themes';
+
+import { Toaster } from 'sonner';
+
 import { Inter } from 'next/font/google';
 import '@/assets/styles/globals.css';
+
 import { APP_DESCRIPTION, APP_NAME, SERVER_URL } from '@/lib/constants';
-import { ThemeProvider } from 'next-themes';
 
 const inter = Inter({
     variable: '--font-geist-sans',
@@ -37,6 +41,7 @@ export default function RootLayout({
                 >
                     {children}
                 </ThemeProvider>
+                <Toaster />
             </body>
         </html>
     );
