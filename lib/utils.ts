@@ -106,6 +106,18 @@ export function formatCurrency(amount: number | string | null) {
     }
 }
 
+const NUMBER_FORMATTER = new Intl.NumberFormat('en-AU');
+
+/**
+ * Formats number
+ *
+ * @param number number to format
+ * @returns
+ */
+export function formatNumber(number: number) {
+    return NUMBER_FORMATTER.format(number);
+}
+
 /**
  * Shorten UUID
  * @param id
