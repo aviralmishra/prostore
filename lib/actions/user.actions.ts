@@ -3,9 +3,11 @@
 import { auth, signIn, signOut } from '@/auth';
 import { prisma } from '@/db/prisma';
 import { ShippingAddress } from '@/types';
+import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { z } from 'zod';
-
+import { PAGE_SIZE } from '../constants';
 import { hash } from '../encrypt';
 import { formatError } from '../utils';
 import {
@@ -13,9 +15,14 @@ import {
     shippingAddressSchema,
     signInFormSchema,
     signUpFormSchema,
+    updateUserSchema,
 } from '../validators';
+import { getMyCart } from './cart.actions';
 
-export async function signInUser(prevState: unknown, formData: FormData) {
+export async function signInWithCredentials(
+    prevState: unknown,
+    formData: FormData
+) {
     try {
         const user = signInFormSchema.parse({
             email: formData.get('email'),
@@ -24,20 +31,24 @@ export async function signInUser(prevState: unknown, formData: FormData) {
 
         await signIn('credentials', user);
 
-        return { success: true, message: 'Signed in successfully.' };
+        return { success: true, message: 'Signed in successfully' };
     } catch (error) {
         if (isRedirectError(error)) {
             throw error;
         }
-
-        return {
-            success: false,
-            message: 'Sign in failed with invalid email or password.',
-        };
+        return { success: false, message: 'Invalid email or password' };
     }
 }
 
 export async function signOutUser() {
+    // get current users cart and delete it so it does not persist to next user
+    const currentCart = await getMyCart();
+
+    if (currentCart?.id) {
+        await prisma.cart.delete({ where: { id: currentCart.id } });
+    } else {
+        console.warn('No cart found for deletion.');
+    }
     await signOut();
 }
 
@@ -67,13 +78,22 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
             password: plainPassword,
         });
 
-        return { success: true, message: 'User registered successfully.' };
+        return { success: true, message: 'User registered successfully' };
     } catch (error) {
         if (isRedirectError(error)) {
             throw error;
         }
         return { success: false, message: formatError(error) };
     }
+}
+
+// Get user by the ID
+export async function getUserById(userId: string) {
+    const user = await prisma.user.findFirst({
+        where: { id: userId },
+    });
+    if (!user) throw new Error('User not found');
+    return user;
 }
 
 export async function updateUserAddress(data: ShippingAddress) {
@@ -84,7 +104,7 @@ export async function updateUserAddress(data: ShippingAddress) {
             where: { id: session?.user?.id },
         });
 
-        if (!currentUser) throw new Error('User not found.');
+        if (!currentUser) throw new Error('User not found');
 
         const address = shippingAddressSchema.parse(data);
 
@@ -95,19 +115,11 @@ export async function updateUserAddress(data: ShippingAddress) {
 
         return {
             success: true,
-            message: 'User updated successfully.',
+            message: 'User updated successfully',
         };
     } catch (error) {
         return { success: false, message: formatError(error) };
     }
-}
-
-export async function getUserById(userId: string) {
-    const user = await prisma.user.findFirst({
-        where: { id: userId },
-    });
-    if (!user) throw new Error('User not found.');
-    return user;
 }
 
 export async function updateUserPaymentMethod(
@@ -119,7 +131,7 @@ export async function updateUserPaymentMethod(
             where: { id: session?.user?.id },
         });
 
-        if (!currentUser) throw new Error('User not found.');
+        if (!currentUser) throw new Error('User not found');
 
         const paymentMethod = paymentMethodSchema.parse(data);
 
@@ -130,7 +142,7 @@ export async function updateUserPaymentMethod(
 
         return {
             success: true,
-            message: 'User updated successfully.',
+            message: 'User updated successfully',
         };
     } catch (error) {
         return { success: false, message: formatError(error) };
@@ -140,20 +152,102 @@ export async function updateUserPaymentMethod(
 export async function updateProfile(user: { name: string; email: string }) {
     try {
         const session = await auth();
+
         const currentUser = await prisma.user.findFirst({
-            where: { id: session?.user?.id },
+            where: {
+                id: session?.user?.id,
+            },
         });
 
-        if (!currentUser) throw new Error('User not found.');
+        if (!currentUser) throw new Error('User not found');
 
         await prisma.user.update({
-            where: { id: currentUser.id },
-            data: { name: user.name },
+            where: {
+                id: currentUser.id,
+            },
+            data: {
+                name: user.name,
+            },
         });
 
         return {
             success: true,
-            message: 'User updated successfully.',
+            message: 'User updated successfully',
+        };
+    } catch (error) {
+        return { success: false, message: formatError(error) };
+    }
+}
+
+export async function getAllUsers({
+    limit = PAGE_SIZE,
+    page,
+    query,
+}: {
+    limit?: number;
+    page: number;
+    query: string;
+}) {
+    const queryFilter: Prisma.UserWhereInput =
+        query && query !== 'all'
+            ? {
+                  name: {
+                      contains: query,
+                      mode: 'insensitive',
+                  } as Prisma.StringFilter,
+              }
+            : {};
+
+    const data = await prisma.user.findMany({
+        where: {
+            ...queryFilter,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: (page - 1) * limit,
+    });
+
+    const dataCount = await prisma.user.count();
+
+    return {
+        data,
+        totalPages: Math.ceil(dataCount / limit),
+    };
+}
+
+export async function deleteUser(id: string) {
+    try {
+        await prisma.user.delete({ where: { id } });
+
+        revalidatePath('/admin/users');
+
+        return {
+            success: true,
+            message: 'User deleted successfully',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: formatError(error),
+        };
+    }
+}
+
+export async function updateUser(user: z.infer<typeof updateUserSchema>) {
+    try {
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                name: user.name,
+                role: user.role,
+            },
+        });
+
+        revalidatePath('/admin/users');
+
+        return {
+            success: true,
+            message: 'User updated successfully',
         };
     } catch (error) {
         return { success: false, message: formatError(error) };
