@@ -47,6 +47,13 @@ export const productDefaultValues = {
     banner: null,
 };
 
+// Review
+export const reviewDefaultValues = {
+    title: '',
+    comment: '',
+    rating: 0,
+};
+
 // User
 export const USER_ROLES = process.env.USER_ROLES
     ? process.env.USER_ROLES.split(', ')
