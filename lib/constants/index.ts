@@ -58,3 +58,6 @@ export const reviewDefaultValues = {
 export const USER_ROLES = process.env.USER_ROLES
     ? process.env.USER_ROLES.split(', ')
     : ['admin', 'user'];
+
+// Email
+export const SENDER_EMAIL = process.env.SENDER_EMAIL;
