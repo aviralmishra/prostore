@@ -41,13 +41,21 @@ const ProductForm = ({
 }) => {
     const router = useRouter();
 
-    const form = useForm<z.infer<typeof insertProductSchema>>({
-        resolver:
-            type === 'Update'
-                ? zodResolver(updateProductSchema)
-                : zodResolver(insertProductSchema),
-        defaultValues:
-            product && type === 'Update' ? product : productDefaultValues,
+    let defaultValues: typeof product | typeof productDefaultValues;
+    let schemaToUse: typeof updateProductSchema | typeof insertProductSchema;
+
+    if (product && type === 'Update') {
+        schemaToUse = updateProductSchema;
+        defaultValues = product;
+    } else {
+        schemaToUse = insertProductSchema;
+        defaultValues = productDefaultValues;
+    }
+
+    const form = useForm<z.infer<typeof schemaToUse>>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(schemaToUse) as any,
+        defaultValues,
     });
 
     const onSubmit: SubmitHandler<z.infer<typeof insertProductSchema>> = async (
