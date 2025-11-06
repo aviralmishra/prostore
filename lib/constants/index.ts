@@ -16,7 +16,7 @@ export const DEFAULT_PAYMENT_METHOD =
 // Fetch
 export const LATEST_PRODUCTS_LIMIT =
     Number(process.env.LATEST_PRODUCTS_LIMIT) || 4;
-export const PAGE_SIZE = Number(process.env.PAGE_SIZE) || 2;
+export const PAGE_SIZE = Number(process.env.PAGE_SIZE) || 10;
 
 // Form default values
 export const signInDefaultValues = {
