@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache';
 
 import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
-import { CartItem, PaymentResult } from '@/types';
+import { CartItem, PaymentResult, ShippingAddress } from '@/types';
 import { Prisma } from '@prisma/client';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 
+import { sendPurchaseReceipt } from '@/email';
 import { PAGE_SIZE } from '../constants';
 import { paypal } from '../paypal';
 import { convertToPlainObject, formatError } from '../utils';
@@ -229,6 +230,14 @@ export async function updateOrderToPaid({
     // Get updated order after transaction
     const updatedOrder = await getOrderById(orderId);
     if (!updatedOrder) throw new Error('Order not found');
+
+    sendPurchaseReceipt({
+        order: {
+            ...updatedOrder,
+            shippingAddress: updatedOrder.shippingAddress as ShippingAddress,
+            paymentResult: updatedOrder.paymentResult as PaymentResult,
+        },
+    });
 }
 
 export async function getMyOrders({
