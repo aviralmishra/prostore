@@ -19,10 +19,7 @@ import {
 } from '../validators';
 import { getMyCart } from './cart.actions';
 
-export async function signInWithCredentials(
-    prevState: unknown,
-    formData: FormData
-) {
+export async function signInUser(prevState: unknown, formData: FormData) {
     try {
         const user = signInFormSchema.parse({
             email: formData.get('email'),
@@ -41,13 +38,11 @@ export async function signInWithCredentials(
 }
 
 export async function signOutUser() {
-    // get current users cart and delete it so it does not persist to next user
+    // Delete in case current user has a cart
     const currentCart = await getMyCart();
 
     if (currentCart?.id) {
         await prisma.cart.delete({ where: { id: currentCart.id } });
-    } else {
-        console.warn('No cart found for deletion.');
     }
     await signOut();
 }
